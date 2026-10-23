@@ -6,8 +6,8 @@ averlo riprodotto, indicando il comando o i passaggi, il risultato atteso e quel
 
 ## Mappa del progetto
 
-La mappa è stata ricostruita con Graphify sul commit `b4fb8ae` (indice del 22 ottobre 2026):
-649 nodi, 1.494 relazioni e 21 comunità.
+La mappa è stata ricostruita con Graphify sul commit `98e3fdb` (indice del 23 ottobre 2026):
+648 nodi, 1.497 relazioni e 21 comunità.
 
 - `syntax.jl`: lexer, parser Pratt e costruzione degli alberi `Node`; tra i nodi mappati:
   `parse_toplevel`, `parse_stmt`, `parse_function`, `parse_list`, `parse_args` e `parse_for`.
@@ -60,10 +60,10 @@ eseguendo codice e test e confrontandoli con la specifica.
 
 ### Parser e semantica
 
-- [ ] **Lexer, parser e AST** — Verificare token, precedenza e associatività degli
-  operatori, delimitatori annidati, stringhe, commenti, errori di sintassi e posizioni
-  degli errori. La suite corrente passa; confronto completo con `SPEC.md` e casi limite
-  ancora da completare.
+- [ ] **Lexer, parser e AST** — Coperti dalla suite i token e le forme principali, precedenza,
+  associatività, delimitatori, stringhe/interpolazione, commenti, errori e posizioni
+  (`julia --startup-file=no test/runtests.jl`: 261 test passati). Resta da completare la
+  matrice requisito per requisito contro `SPEC.md` e i casi limite non ancora mappati.
 - [x] **Valutazione e scope** — Verificati assegnamento locale senza alterare i globali,
   cattura e mutazione di variabili nelle closure, e visibilità locale del binding del ciclo.
   Aggiunti test di regressione in `test/runtests.jl`; suite (251 test) e conformità Core
@@ -96,53 +96,62 @@ eseguendo codice e test e confrontandoli con la specifica.
 - [x] **Profilo Triad-Core** — `julia --startup-file=no conformance/run.jl --cases
   conformance/core/cases` passa tutti i casi.
 - [ ] **Copertura dei requisiti** — Collegare ogni requisito normativo di `SPEC.md` e
-  `SPEC-CORE.md` a uno o più test; creare casi minimi per i requisiti non coperti.
-- [x] **Oracle opzionali** — `julia --startup-file=no test/oracles/oracle_tests.jl` passa:
-  confronti con SWI-Prolog, SBCL e Julia.
+  `SPEC-CORE.md` a uno o più test; creare casi minimi per i requisiti non coperti. I riepiloghi
+  delle suite sono verdi, ma non esiste ancora una matrice di tracciabilità completa.
+- [ ] **Oracle opzionali** — `julia --startup-file=no test/oracles/oracle_tests.jl` termina
+  correttamente, ma in questo ambiente tutti e tre i testset sono `saltato`: non sono
+  disponibili SWI-Prolog, SBCL né l'interprete esterno usato dal test Julia. Installare i
+  runtime oracle ed eseguire nuovamente per verificare i confronti effettivi.
 
 ### CLI, piattaforme e distribuzione
 
 - [x] **CLI e caricamento file** — Verificati opzioni, valutazione, codici di uscita,
   `ARGS`, shebang, risoluzione file, errori e REPL nei test dell'implementazione e nella
   conformità.
-- [ ] **Launcher POSIX** — Verificare `bin/triad`: ricerca di Julia, percorsi con spazi,
-  inoltro degli argomenti, shebang e comportamento coerente. Su questa macchina Windows
-  non è disponibile una shell POSIX utilizzabile per l'esecuzione.
+- [x] **Launcher POSIX** — Verificati sintassi (`sh -n`), override `TRIAD_JULIA`, invocazione
+  tramite `PATH`, inoltro di argomenti con spazi e `!`, shebang e codice 1 per file mancante.
+  Aggiunto `test/launcher_posix.sh` ed esecuzione nella lane Linux della CI. Corretto anche il
+  mode bit di `bin/triad` da `100644` a `100755`, necessario per invocarlo direttamente.
 - [x] **Launcher Windows** — Verificati ricerca PATH contro l'alias `WindowsApps`, override
   `TRIAD_JULIA`, modalità `-v` e inoltro di argomenti contenenti `!` attraverso
   `bin/triad.cmd`.
-- [ ] **Seed Linux e Windows** — Ricostruire gli artefatti dai rispettivi sorgenti/generatori,
-  confrontare hash e output con i golden e ripetere i casi CI su entrambi i sistemi.
-  Verificato: entrambi i generatori riproducono i dump esadecimali; decodificando i dump
-  in memoria si ottengono byte identici ai PE/ELF versionati. Restano da eseguire i casi
-  Windows (Defender ha quarantinato il PE rigenerato in `%TEMP%`) e l'ELF su Linux
-  (WSL è presente ma non ha distribuzioni installate).
+- [x] **Seed Linux e Windows** — Entrambi i generatori riproducono i dump esadecimali con
+  gli hash documentati (`11ad…289c` Windows, `ad4c…a5ea` Linux). L'ELF Linux ricostruito
+  stampa `Triad seed Linux OK` e ha SHA-256 `6d504451…a7797f9`. Il PE Windows ricostruito
+  passa 26/26 casi Core via Wine con stdout byte-per-byte ed exit code corretti. La CI
+  Windows hosted e il comportamento di Defender restano da verificare separatamente.
 - [ ] **CI Windows** — Verificare che decodifica, esclusione antivirus facoltativa e casi
   del seed funzionino anche quando l'esclusione non è disponibile; chiarire quali errori
   sono tollerati da `continue-on-error`. Nel workflow il flag si applica solo al passo
   `Add-MpPreference`: decodifica, casi e hash restano bloccanti. In locale Defender ha
   quarantinato il PE non escluso; la lane Windows hosted va quindi verificata senza
   presumere che l'esclusione riesca.
-- [ ] **CI multipiattaforma** — Eseguire o controllare tutte le lane definite in
-  `.github/workflows/ci.yml` su Windows e Linux; verificare che le istruzioni Julia e i
-  comandi usati localmente coincidano con quelli CI.
-- [ ] **Packaging standalone** — Provare `bin/build_standalone.jl` in un ambiente pulito e
-  verificare dipendenze, layout e avvio senza Julia. Il README segnala che il packaging
-  attuale richiede ancora di completare il layout `Project.toml`/`src`: confermare lo
-  stato e aggiornare la documentazione in base al risultato.
+- [ ] **CI multipiattaforma** — Verificate localmente le suite Julia Full/Core e 26 casi
+  seed Windows via Wine; workflow ispezionato e smoke test launcher aggiunto alla lane Linux.
+  Restano da consultare gli esiti hosted Linux/Windows, in particolare PowerShell, Defender e
+  i comandi di decodifica Windows.
+- [ ] **Packaging standalone** — Confermato il blocco: nel repository non esistono
+  `Project.toml`/`src` e PackageCompiler non è installato; lo script di build richiede un
+  package layout caricabile. Va completata la struttura di pacchetto prima di poter testare
+  una build pulita e l'avvio senza Julia.
 
 ### Editor, strumenti e documentazione
 
-- [ ] **Integrazioni editor** — Verificare grammatica, evidenziazione e riconoscimento
-  dell'estensione canonica `.triad` e dell'alias `.td` in `editors/`.
-- [ ] **Strumenti AI** — Verificare opzioni CLI, dipendenze, error handling e riproducibilità
-  di `ai/jev_audit.mjs` e `ai/verify.jl`, senza includere output generati nel repository.
-- [ ] **Documentazione coerente** — Confrontare esempi e comandi in `README.md`,
-  `TUTORIAL.md`, `SPEC.md`, `SPEC-CORE.md`, `BOOTSTRAP.md` e `STATUS.md` con il
-  comportamento effettivo e con i test.
-- [ ] **Repository e artefatti** — Controllare `.gitignore`, `.gitattributes`, hash dei
-  seed e file generati per assicurare che test e build non modifichino accidentalmente
-  golden o artefatti versionati.
+- [x] **Integrazioni editor** — Manifest, configurazione linguaggio e grammatica VS Code
+  sono JSON validi; `package.json` associa `source.triad` a `.triad` e `.td`. La validazione
+  visiva dentro VS Code resta manuale.
+- [ ] **Strumenti AI** — Verificati `node --check`, `julia` per `verify.jl`, `sweep --dry-run`
+  e `locate --dry-run`; le soluzioni mancanti vengono dichiarate `SKIP` come documentato.
+  Corretto il payload di `jev_audit.mjs`, che dichiarava 243 test e 25 casi Windows non
+  verificati: ora riporta 261/261 e qualifica i risultati Windows. Restano da provare chiamate
+  API (serve `TYPESAFE_API_KEY`) e verifiche `PASS` con soluzioni effettive.
+- [ ] **Documentazione coerente** — Corretto il tutorial rimuovendo percorsi d'installazione
+  personali e descrivendo l'ordine reale di ricerca di Julia su POSIX/Windows. Restano da
+  confrontare sistematicamente tutti gli esempi e i requisiti di `README.md`, `TUTORIAL.md`,
+  `SPEC.md`, `SPEC-CORE.md`, `BOOTSTRAP.md` e `STATUS.md` con comportamento e test.
+- [x] **Repository e artefatti** — Verificati `.gitignore` (binari standalone, cache e
+  soluzioni AI locali ignorati), hash SHA-256 dei dump seed e `git diff --check`; i generatori
+  non hanno modificato golden o artefatti tracciati.
 
 ## Come registrare un nuovo bug
 

@@ -30,9 +30,9 @@ julia triad.jl --version
 ```
 
 Launcher (se `bin/` è nel `PATH`): `triad`, `triad.cmd` (Windows).
-Entrambi risolvono l'eseguibile `julia` prima da `PATH`, poi con fallback a
-`C:\Users\xbos\AppData\Local\Programs\Julia-1.13.1\bin\julia.exe` (Windows) se `julia`
-non è raggiungibile. Esempio:
+Il launcher POSIX cerca `TRIAD_JULIA`, poi `julia` nel `PATH` e infine alcune posizioni
+standard Linux/macOS/WSL. Il launcher Windows cerca `TRIAD_JULIA`, poi Julia nel `PATH`
+(ignorando l'alias di `WindowsApps`) e infine le installazioni Windows standard. Esempio:
 
 ```sh
 triad examples/assaggio.td      # esegue assaggio.td
@@ -1005,9 +1005,9 @@ Triad include un harness di test oracle (`test/oracles/oracle_tests.jl`) che cro
 
 | Interprete | Percorso | Cosa viene testato |
 |---|---|---|
-| SWI-Prolog | `C:\Program Files\swipl\bin\swipl.exe` | fatti, regole e query da `examples/famiglia.td` |
-| SBCL (via Portacle) | `C:\Users\xbos\portacle\win\sbcl\bin\sbcl.exe` | closure, lambda e ricorsione |
-| Julia | `julia` (PATH) o `C:\Users\xbos\AppData\Local\Programs\Julia-1.13.1\bin\julia.exe` | multiple dispatch (`defmethod` equivalente) |
+| SWI-Prolog | `swipl` (PATH) | fatti, regole e query da `examples/famiglia.td` |
+| SBCL | `sbcl` (PATH) | closure, lambda e ricorsione |
+| Julia | `julia` (PATH) | multiple dispatch (`defmethod` equivalente) |
 
 Per ogni interprete il harness genera il sorgente nativo equivalente (`.pl`, `.lisp`, `.jl`), lo esegue, normalizza l'output e lo confronta con l'output di Triad sullo stesso esempio.
 
@@ -1038,7 +1038,7 @@ ancestor(A, D) :- parent(A, X), ancestor(X, D).
 
 Comando per le madri:
 ```sh
-"C:\Program Files\swipl\bin\swipl.exe" -s famiglia.pl -g "mother(M,C), format('~w,~w~n',[M,C]), fail; true." -t halt
+swipl -s famiglia.pl -g "mother(M,C), format('~w,~w~n',[M,C]), fail; true." -t halt
 ```
 
 Output atteso (stesso di Triad `solve mother(?m, ?c)` su `examples/famiglia.td`):
@@ -1048,7 +1048,7 @@ pat,jim
 
 Comando per gli antenati di tom:
 ```sh
-"C:\Program Files\swipl\bin\swipl.exe" -s famiglia.pl -g "ancestor(tom,D), format('~w~n',[D]), fail; true." -t halt
+swipl -s famiglia.pl -g "ancestor(tom,D), format('~w~n',[D]), fail; true." -t halt
 ```
 
 Output atteso (stesso di Triad `solve ancestor(:tom, ?d)`):
@@ -1070,10 +1070,9 @@ File Lisp (`oracle.lisp`):
 (format t "~a~%" (fattorial 10))
 ```
 
-Comando (impostare `SBCL_HOME` perché SBCL trovi il core):
+Comando (configurare `SBCL_HOME` solo se richiesto dalla propria installazione):
 ```sh
-set SBCL_HOME=C:\Users\xbos\portacle\win\sbcl\lib\sbcl
-"C:\Users\xbos\portacle\win\sbcl\bin\sbcl.exe" --noinform --load oracle.lisp
+sbcl --noinform --load oracle.lisp
 ```
 
 Output atteso (stesso di Triad `mk = (a, b) -> a + b` e `fattorial`):
@@ -1094,7 +1093,7 @@ println(area(1.5))
 
 Comando:
 ```sh
-"C:\Users\xbos\AppData\Local\Programs\Julia-1.13.1\bin\julia.exe" --startup-file=no oracle.jl
+julia --startup-file=no oracle.jl
 ```
 
 Output atteso (stesso di Triad con le stesse definizioni):

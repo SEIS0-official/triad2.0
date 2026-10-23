@@ -144,11 +144,12 @@ async function knownFacts() {
   return {
     local_suite_results: {
       note: "Results of the project's own suites on this machine. A defect claim must survive these being green, i.e. it must concern behaviour the suites do not cover, or a contradiction between the artifacts themselves.",
-      unit_tests: "243/243 passed",
+      verified_on: "2026-10-23",
+      unit_tests: "261/261 passed",
       conformance_triad_full: "12/12 passed",
       conformance_triad_core: "29/29 passed",
       examples: "7/7 run with exit 0",
-      windows_seed_cases: "25/25 passed against the decoded seed.exe",
+      windows_seed_cases: "not run locally; the Windows CI lane is configured but its hosted result was not checked",
     },
     cli_flags: {
       note:

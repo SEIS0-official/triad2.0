@@ -20,6 +20,9 @@ jobs:
         run: julia --startup-file=no conformance/run.jl --cases conformance/core/cases
       - name: Test suite
         run: julia --startup-file=no test/runtests.jl
+      - name: POSIX launcher
+        if: runner.os == 'Linux'
+        run: sh test/launcher_posix.sh
   seed-windows:
     runs-on: windows-latest
     steps:

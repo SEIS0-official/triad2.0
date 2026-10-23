@@ -59,7 +59,6 @@ for %%d in (
     "%LOCALAPPDATA%\juliaup\bin\julia.exe"
     "%ProgramFiles%\Julia\bin\julia.exe"
     "C:\Julia\bin\julia.exe"
-    "C:\Users\xbos\AppData\Local\Programs\Julia-1.13.1\bin\julia.exe"
 ) do (
     if exist %%d (
         set "JULIA=%%~d"
